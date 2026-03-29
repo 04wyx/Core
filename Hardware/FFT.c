@@ -38,17 +38,34 @@ void FFT_test(void)
 }
 //查找FFT结果误差范围内最大值
 float Find_Wave_Amp(int index, int step)
-{
-  float FFT_Index = FFT_out[ index * (step - 1) ];
-  // float FFT_Index_5 = FFT_out[ index * 5];
-  float FFT_Max = FFT_Index;
-  for(int i = index * step - range * (step -1); i < index * step + range * (step -1); i++){
-    if(FFT_out[i] > FFT_Max)
-    {
-      FFT_Max = FFT_out[i];
-    }
-  }
-  return FFT_Max;
+{	
+	int WAVE_INDEX = index * step;
+	float FFT_Index = FFT_out[ WAVE_INDEX];
+	if (WAVE_INDEX <= 100)
+	{
+ 		float FFT_Max = FFT_Index;
+  		for(int i = index * step - range * (step -2); i < index * step + range * (step -2); i++){
+  		  if(FFT_out[i] >= FFT_Max)
+    		{
+    	 	 FFT_Max = FFT_out[i];
+			//  printf("wave_index = %d, i = %d, FFT_out[i] = %.1f\r\n", WAVE_INDEX, i, FFT_out[i]);
+   			}
+ 		}	
+	  return FFT_Max;
+	}
+	else
+	{
+ 		float FFT_Max = FFT_Index;
+  		for(int i = (index - range) * step; i < (index + range) * step; i++){
+  		  if(FFT_out[i] >= FFT_Max)
+    		{
+    	 	 FFT_Max = FFT_out[i];
+			//  printf("wave_index = %d, i = %d, FFT_out[i] = %.1f\r\n", WAVE_INDEX, i, FFT_out[i]);
+   			}
+ 		}	
+	  return FFT_Max;
+	}
+
 }
 //修正wave_index的偏差
 int wave_set(int index)
