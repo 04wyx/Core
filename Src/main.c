@@ -31,27 +31,24 @@
 #include "math.h"
 #include "arm_math.h"
 #include "arm_const_structs.h"
+#include "FFT.h"
+#include "Config.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
-int find_peak(void);
-void FFT_test(void);
 void DataSolve_Same(void);
 void DataSolve_Different(void);
-float Find_Wave_Amp(int index,int step);
-int wave_set(int index);
-
-
-#define NPT 1024
-#define range 1
-
-uint16_t ADC_Value[NPT]	= {0};
+// int find_peak(void);
+// void FFT_test(void);
+// float Find_Wave_Amp(int index,int step);
+// int wave_set(int index);
 
 uint8_t adcflag = 0,wave_flag = 0;
 
+uint16_t ADC_Value[NPT]	= {0};
 float FFT_in[ NPT*2 ] = {0};
 float FFT_out[ NPT/2 ];
 float ADC_Float[ NPT ] = {0};
@@ -185,7 +182,7 @@ int main(void)
  				{
           //查看三倍频点位置的幅值
           FFT_Out_3_wave1 = Find_Wave_Amp(wave1_index, 3);
-          //  printf("FFT_Out_3_wave1 = %.1f\r\n", FFT_Out_3_wave1);
+          printf("FFT_Out_3_wave1 = %.1f\r\n", FFT_Out_3_wave1);
  					if(FFT_Out_3_wave1 > 30000)  //FFT_out[wave1_index * 5] > 20000  //三角+三角
  					{
  						based_wave1_state = based_wave2_state=2; 
@@ -327,77 +324,77 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     adcflag = 1; // Handle ADC conversion complete event
   }
 }
-//查找FFT结果误差范围内最大值
-float Find_Wave_Amp(int index, int step)
-{
-  float FFT_Index = FFT_out[ index * step-1];
-  // float FFT_Index_5 = FFT_out[ index * 5];
-  float FFT_Max = FFT_Index;
-  for(int i = index * step - range * (step -1); i < index * step + range * (step -1); i++){
-    if(FFT_out[i] > FFT_Max)
-    {
-      FFT_Max = FFT_out[i];
-    }
-  }
-  return FFT_Max;
-}
-//修正wave_index的偏差
-int wave_set(int index)
-{
-//  if(index < 20)
-//  { 
-//    index = 20; 
-//  }
-//  else if(index > 100)
-//  { 
-//    index = 100; 
-//  }
-  int corrected_index = index + range;
-  int num = corrected_index / 5;
-  int index_new = num * 5;
-//	printf("%d,%d,%d\r\n",index,num,index_new);
-  if(index_new >= (index - range) && index_new <= (index + range))
-  {
-    return index_new;
-  }else{
-		return index;
-	}
-}
-/*判断两个信号频率是否一样*/
-int find_peak(void)
-{
-	int count=0;
-	for(int i = 20 - range;i <= 100 + range;i++)
-	{
-		if( (FFT_out[i] > FFT_out[i-1] ) && (FFT_out[i] > FFT_out[i+1] ) && FFT_out[i] > 100000 )
-		{
-			count++;
-//			printf("count = %d\r\n",i);
-		}
-	}
-  printf("wave_flag = %d\r\n",count);
+// //查找FFT结果误差范围内最大值
+// float Find_Wave_Amp(int index, int step)
+// {
+//   float FFT_Index = FFT_out[ index * step-1];
+//   // float FFT_Index_5 = FFT_out[ index * 5];
+//   float FFT_Max = FFT_Index;
+//   for(int i = index * step - range * (step -1); i < index * step + range * (step -1); i++){
+//     if(FFT_out[i] > FFT_Max)
+//     {
+//       FFT_Max = FFT_out[i];
+//     }
+//   }
+//   return FFT_Max;
+// }
+// //修正wave_index的偏差
+// int wave_set(int index)
+// {
+// //  if(index < 20)
+// //  { 
+// //    index = 20; 
+// //  }
+// //  else if(index > 100)
+// //  { 
+// //    index = 100; 
+// //  }
+//   int corrected_index = index + range;
+//   int num = corrected_index / 5;
+//   int index_new = num * 5;
+// //	printf("%d,%d,%d\r\n",index,num,index_new);
+//   if(index_new >= (index - range) && index_new <= (index + range))
+//   {
+//     return index_new;
+//   }else{
+// 		return index;
+// 	}
+// }
+// /*判断两个信号频率是否一样*/
+// int find_peak(void)
+// {
+// 	int count=0;
+// 	for(int i = 20 - range;i <= 100 + range;i++)
+// 	{
+// 		if( (FFT_out[i] > FFT_out[i-1] ) && (FFT_out[i] > FFT_out[i+1] ) && FFT_out[i] > 100000 )
+// 		{
+// 			count++;
+// //			printf("count = %d\r\n",i);
+// 		}
+// 	}
+//   printf("wave_flag = %d\r\n",count);
 
-	if(count == 1){ return 1; }  //特殊情况两者频率相同
-	else{ return 2; }					//普遍情况
-}
-/*fft——test*/
-void FFT_test(void)
-{
-	printf("ADC \r\n");
-	for(int i=0;i<NPT;i++)
-	{
-		ADC_Float[i]=(float)ADC_Value[i];
-//		printf("%d ,",ADC_Value[i]);
-	}			
-	printf("\r\nADC Over\r\n");
-	for(int j=0;j < NPT; j++)
-	{
-		FFT_in[j*2]=ADC_Float[j];
-		FFT_in[j*2+1]=0;				
-	}			
-	arm_cfft_f32(&arm_cfft_sR_f32_len1024,FFT_in,0,1);		 
-	arm_cmplx_mag_f32(FFT_in,FFT_out,NPT/2);	
-}
+// 	if(count == 1){ return 1; }  //特殊情况两者频率相同
+// 	else{ return 2; }					//普遍情况
+// }
+// /*fft——test*/
+// void FFT_test(void)
+// {
+// 	printf("ADC \r\n");
+// 	for(int i=0;i<NPT;i++)
+// 	{
+// 		ADC_Float[i]=(float)ADC_Value[i];
+// //		printf("%d ,",ADC_Value[i]);
+// 	}			
+// 	printf("\r\nADC Over\r\n");
+// 	for(int j=0;j < NPT; j++)
+// 	{
+// 		FFT_in[j*2]=ADC_Float[j];
+// 		FFT_in[j*2+1]=0;				
+// 	}			
+// 	arm_cfft_f32(&arm_cfft_sR_f32_len1024,FFT_in,0,1);		 
+// 	arm_cmplx_mag_f32(FFT_in,FFT_out,NPT/2);	
+// }
 /*处理相同频率的信号*/
 void DataSolve_Same(void)
 {
